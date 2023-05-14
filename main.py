@@ -20,6 +20,7 @@ from datasets.idda import IDDADataset
 from models.deeplabv3 import deeplabv3_mobilenetv2
 from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
 
+from models.cnn import CNN
 
 def set_seed(random_seed):
     random.seed(random_seed)
@@ -48,9 +49,7 @@ def model_init(args):
         model.fc = nn.Linear(in_features=512, out_features=get_dataset_num_classes(args.dataset))
         return model
     if args.model == 'cnn':
-        # TODO: missing code here!
-        raise NotImplementedError
-    raise NotImplementedError
+        return CNN()
 
 
 def get_transforms(args):
