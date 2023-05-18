@@ -202,3 +202,7 @@ print('*** End of the training of the final model ***')
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
 test_loss, test_accuracy = validation_or_test(test_loader, final_model, nn.CrossEntropyLoss(), device)
 print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
+
+
+path = ''
+torch.save(final_model.state_dict(), path)
