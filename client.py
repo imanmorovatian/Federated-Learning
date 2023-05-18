@@ -61,10 +61,13 @@ class Client:
         (by calling the run_epoch method for each local epoch of training)
         :return: length of the local dataset, copy of the model parameters
         """
-        # TODO: missing code here!
+        # TODO: missing code here! -----------> ##### DONE :)
+        local_optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=self.args.momentum, weight_decay=self.args.weight_decay)
         for epoch in range(self.args.num_epochs):
-            # TODO: missing code here!
-            raise NotImplementedError
+            # TODO: missing code here! -----------> ##### DONE :)
+            self.run_epoch(epoch, local_optimizer)
+            # raise NotImplementedError
+        return len(self.dataset), copy.deepcopy(self.model.state_dict())
 
     def test(self, metric):
         """
