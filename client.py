@@ -44,9 +44,16 @@ class Client:
         :param cur_epoch: current epoch of training
         :param optimizer: optimizer used for the local training
         """
+        self.model.train() # set model to training mode
+
         for cur_step, (images, labels) in enumerate(self.train_loader):
             # TODO: missing code here!
-            raise NotImplementedError
+            optimizer.zero_grad()
+            outputs = self._get_outputs(images)
+            loss = self.reduction(self.criterion, outputs, labels)
+            loss.backward()
+            optimizer.step()
+            # raise NotImplementedError
 
     def train(self):
         """
