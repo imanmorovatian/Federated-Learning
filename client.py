@@ -74,9 +74,12 @@ class Client:
         This method tests the model on the local dataset of the client.
         :param metric: StreamMetric object
         """
-        # TODO: missing code here!
+        # TODO: missing code here! -----------> ##### DONE :)
+        self.model.eval() # set model to evaluation mode
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
-                # TODO: missing code here!
-                raise NotImplementedError
+                # TODO: missing code here! -----------> ##### DONE :)
+                for i, (images, labels) in enumerate(self.test_loader):
+                    outputs = self._get_outputs(images)
+                # raise NotImplementedError
                 self.update_metric(metric, outputs, labels)
