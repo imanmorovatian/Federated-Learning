@@ -28,6 +28,8 @@ class Server:
         updates = []
         for i, c in enumerate(clients):
             # TODO: missing code here!
+            (len, parm) = c.train()
+            updates.append((len, parm))
             raise NotImplementedError
         return updates
 
@@ -38,7 +40,17 @@ class Server:
         :return: aggregated parameters
         """
         # TODO: missing code here!
-        raise NotImplementedError
+        output = self.model.copy()
+        weighted_sum = 0
+        weights = 0
+        for key in output:
+            for i in updates:
+                weighted_sum += i[1][key] * i[0]
+                weights += i[0]
+            output[key] = weighted_sum / weights
+          
+        return output
+        # raise NotImplementedError
 
     def train(self):
         """
@@ -46,7 +58,10 @@ class Server:
         """
         for r in range(self.args.num_rounds):
             # TODO: missing code here!
-            raise NotImplementedError
+            clients_temp = self.select_clients()
+            updates_temp = self.train_round(clients_temp)
+            self.aggregate(updates_temp)
+            # raise NotImplementedError
 
     def eval_train(self):
         """
