@@ -34,9 +34,8 @@ class Client:
     def _get_outputs(self, images):
         if self.args.model == 'deeplabv3_mobilenetv2':
             return self.model(images)['out']
-        if self.args.model == 'resnet18':
+        if self.args.model == 'resnet18' or self.args.model == 'cnn':
             return self.model(images)
-        raise NotImplementedError
 
     def run_epoch(self, cur_epoch, optimizer):
         """
@@ -48,9 +47,12 @@ class Client:
 
         for cur_step, (images, labels) in enumerate(self.train_loader):
             # TODO: missing code here!
+            images = images.to('cuda')
+            labels = labels.to('cuda')
+
             optimizer.zero_grad()
             outputs = self._get_outputs(images)
-            loss = self.reduction(self.criterion, outputs, labels)
+            loss = self.reduction(outputs, labels)            
             loss.backward()
             optimizer.step()
             # raise NotImplementedError
@@ -62,7 +64,7 @@ class Client:
         :return: length of the local dataset, copy of the model parameters
         """
         # TODO: missing code here! -----------> ##### DONE :)
-        local_optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=self.args.momentum, weight_decay=self.args.weight_decay)
+        local_optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=self.args.m, weight_decay=self.args.wd)
         for epoch in range(self.args.num_epochs):
             # TODO: missing code here! -----------> ##### DONE :)
             self.run_epoch(epoch, local_optimizer)
@@ -79,6 +81,9 @@ class Client:
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
                 # TODO: missing code here! -----------> ##### DONE :)
+                images = images.to('cuda')
+                labels = labels.to('cuda')
+
                 outputs = self._get_outputs(images)
                 # raise NotImplementedError
                 self.update_metric(metric, outputs, labels)
