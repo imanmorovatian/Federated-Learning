@@ -52,7 +52,8 @@ class Client:
 
             optimizer.zero_grad()
             outputs = self._get_outputs(images)
-            loss = self.reduction(outputs, labels)            
+            loss = self.criterion(outputs, labels)
+            loss = self.reduction(loss, labels)
             loss.backward()
             optimizer.step()
             # raise NotImplementedError
