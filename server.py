@@ -30,7 +30,7 @@ class Server:
             # TODO: missing code here!
             (len, parm) = c.train()
             updates.append((len, parm))
-            raise NotImplementedError
+            # raise NotImplementedError
         return updates
 
     def aggregate(self, updates):
@@ -40,10 +40,11 @@ class Server:
         :return: aggregated parameters
         """
         # TODO: missing code here!
-        output = self.model.copy()
+        output = updates[0][1].copy()
         weighted_sum = 0
         weights = 0
         for key in output:
+            weighted_sum = 0
             for i in updates:
                 weighted_sum += i[1][key] * i[0]
                 weights += i[0]
