@@ -202,4 +202,6 @@ pyrightconfig.json
 data/femnist/data
 data/femnist/meta
 
+wandb/
+
 stat.txt

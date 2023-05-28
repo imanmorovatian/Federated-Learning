@@ -21,6 +21,7 @@ from models.deeplabv3 import deeplabv3_mobilenetv2
 from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
 
 from models.cnn import CNN
+import wandb
 
 def set_seed(random_seed):
     random.seed(random_seed)
@@ -164,6 +165,7 @@ def gen_clients(args, train_datasets, test_datasets, model):
 
 
 def main():
+    wandb.login()
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
@@ -179,9 +181,10 @@ def main():
 
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
-    server = Server(args, train_clients, test_clients, model, metrics)
+    server = Server(args, train_clients, test_clients, model, metrics, wandb)
     server.train()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     main()
+    wandb.finish()

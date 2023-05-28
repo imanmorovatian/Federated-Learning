@@ -7,13 +7,28 @@ import torch
 
 class Server:
 
-    def __init__(self, args, train_clients, test_clients, model, metrics):
+    def __init__(self, args, train_clients, test_clients, model, metrics, wandb):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
         self.model = model
         self.metrics = metrics
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
+        self.wandb = wandb
+
+        wandb.init(
+        project = 'narenji', 
+        name = 'First Phase Attempt: 1', # set the name of experiment
+        config={
+            'architecture': self.args.model,
+            'dataset': self.args.dataset,
+            'epochs': self.args.num_epochs,
+            'batch_size': self.args.bs,
+            'learning_rate': self.args.lr,
+            'momentum': self.args.m,
+            'weight_decay': self.args.wd
+            }
+        )
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
@@ -61,8 +76,10 @@ class Server:
             updates_temp = self.train_round(clients_temp)
             self.aggregate(updates_temp) # update self.model
 
-            self.eval_train()
-            self.test()
+            if r % 2 == 0:
+                print('Round: ', r+1)
+                self.eval_train()
+                self.test()
 
     def eval_train(self):
         """
@@ -73,11 +90,20 @@ class Server:
         for client in self.train_clients:
             loss += client.test(self.metrics['eval_train'])
 
+        loss = loss / len(self.train_clients)
+        overal_acc = self.metrics['eval_train'].get_results()['Overall Acc']
+        mean_acc = self.metrics['eval_train'].get_results()['Mean Acc']
         print('****** Train Results ******')
-        print('Loss: ', round(loss / len(self.train_clients), 2))
-        print('Total Accuracy: ', round(self.metrics['eval_train'].get_results()['Overall Acc'], 2))
-        print('Mean Accuracy: ', round(self.metrics['eval_train'].get_results()['Mean Acc'], 2))
+        print('Loss: ', round(loss, 2))
+        print('Total Accuracy: ', round(overal_acc, 2))
+        print('Mean Accuracy: ', round(mean_acc, 2))
         print()
+        
+        self.wandb.log({
+            'Train Loss': loss,
+            'Train Overal Accuracy': overal_acc,
+            'Train Mean Accuracy': mean_acc,
+        })
 
     def test(self):
         """
@@ -88,8 +114,17 @@ class Server:
         for client in self.test_clients:
             loss += client.test(self.metrics['test'])
 
+        loss = loss / len(self.test_clients)
+        overal_acc = self.metrics['test'].get_results()['Overall Acc']
+        mean_acc = self.metrics['test'].get_results()['Mean Acc']
         print('****** Test Results ******')
-        print('Loss: ', round(loss / len(self.test_clients), 2))
-        print('Total Accuracy: ', round(self.metrics['test'].get_results()['Overall Acc'], 2))
-        print('Mean Accuracy: ', round(self.metrics['test'].get_results()['Mean Acc'], 2))
+        print('Loss: ', round(loss, 2))
+        print('Total Accuracy: ', round(overal_acc, 2))
+        print('Mean Accuracy: ', round(mean_acc, 2))
         print()
+
+        self.wandb.log({
+            'Test Loss': loss,
+            'Test Overal Accuracy': overal_acc,
+            'Test Mean Accuracy': mean_acc,
+        })
