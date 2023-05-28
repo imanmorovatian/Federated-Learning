@@ -30,7 +30,6 @@ class Server:
             # TODO: missing code here!
             (len, parm) = c.train()
             updates.append((len, parm))
-            # raise NotImplementedError
         return updates
 
     def aggregate(self, updates):
@@ -51,7 +50,6 @@ class Server:
             output[key] = weighted_sum / weights
           
         return output
-        # raise NotImplementedError
 
     def train(self):
         """
@@ -61,19 +59,30 @@ class Server:
             # TODO: missing code here!
             clients_temp = self.select_clients()
             updates_temp = self.train_round(clients_temp)
-            self.aggregate(updates_temp)
-            # raise NotImplementedError
+            self.aggregate(updates_temp) # update self.model
+            self.eval_train()
+            self.test()
 
     def eval_train(self):
         """
         This method handles the evaluation on the train clients
         """
         # TODO: missing code here!
-        raise NotImplementedError
+        for client in self.train_clients:
+            client.test(self.metrics['eval_train'])
+
+        print('Train Results')
+        print(self.metrics['eval_train'])
+        print('********************************')
 
     def test(self):
         """
             This method handles the test on the test clients
         """
         # TODO: missing code here!
-        raise NotImplementedError
+        for client in self.test_clients:
+            client.test(self.metrics['test'])
+
+        print('Test Results')
+        print(self.metrics['test'])
+        print('********************************')

@@ -56,7 +56,6 @@ class Client:
             loss = self.reduction(loss, labels)
             loss.backward()
             optimizer.step()
-            # raise NotImplementedError
 
     def train(self):
         """
@@ -69,7 +68,6 @@ class Client:
         for epoch in range(self.args.num_epochs):
             # TODO: missing code here! -----------> ##### DONE :)
             self.run_epoch(epoch, local_optimizer)
-            # raise NotImplementedError
         return len(self.dataset), copy.deepcopy(self.model.state_dict())
 
     def test(self, metric):
@@ -86,5 +84,4 @@ class Client:
                 labels = labels.to('cuda')
 
                 outputs = self._get_outputs(images)
-                # raise NotImplementedError
                 self.update_metric(metric, outputs, labels)
