@@ -76,6 +76,8 @@ class Client:
         :param metric: StreamMetric object
         """
         # TODO: missing code here! -----------> ##### DONE :)
+        samples = 0
+        cumulative_loss = 0
         self.model.eval() # set model to evaluation mode
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
@@ -85,3 +87,11 @@ class Client:
 
                 outputs = self._get_outputs(images)
                 self.update_metric(metric, outputs, labels)
+
+                # calculating loss
+                loss = self.criterion(outputs, labels)
+                loss = self.reduction(loss, labels)
+                cumulative_loss += loss.item() * images.shape[0]
+                samples += images.shape[0]
+
+        return cumulative_loss / samples

@@ -43,6 +43,8 @@ class StreamClsMetrics(Metrics):
             "Class Acc": cls_acc
         }
 
+        return self.results # added by ourselves. It wan't in the original code
+
     def __str__(self):
         string = "\n"
         ignore = ["Class Acc", "Confusion Matrix Pred", "Confusion Matrix", "Confusion Matrix Text"]

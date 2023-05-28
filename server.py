@@ -60,6 +60,7 @@ class Server:
             clients_temp = self.select_clients()
             updates_temp = self.train_round(clients_temp)
             self.aggregate(updates_temp) # update self.model
+
             self.eval_train()
             self.test()
 
@@ -68,21 +69,27 @@ class Server:
         This method handles the evaluation on the train clients
         """
         # TODO: missing code here!
+        loss = 0
         for client in self.train_clients:
-            client.test(self.metrics['eval_train'])
+            loss += client.test(self.metrics['eval_train'])
 
-        print('Train Results')
-        print(self.metrics['eval_train'])
-        print('********************************')
+        print('****** Train Results ******')
+        print('Loss: ', round(loss / len(self.train_clients), 2))
+        print('Total Accuracy: ', round(self.metrics['eval_train'].get_results()['Overall Acc'], 2))
+        print('Mean Accuracy: ', round(self.metrics['eval_train'].get_results()['Mean Acc'], 2))
+        print()
 
     def test(self):
         """
             This method handles the test on the test clients
         """
         # TODO: missing code here!
+        loss = 0
         for client in self.test_clients:
-            client.test(self.metrics['test'])
+            loss += client.test(self.metrics['test'])
 
-        print('Test Results')
-        print(self.metrics['test'])
-        print('********************************')
+        print('****** Test Results ******')
+        print('Loss: ', round(loss / len(self.test_clients), 2))
+        print('Total Accuracy: ', round(self.metrics['test'].get_results()['Overall Acc'], 2))
+        print('Mean Accuracy: ', round(self.metrics['test'].get_results()['Mean Acc'], 2))
+        print()
