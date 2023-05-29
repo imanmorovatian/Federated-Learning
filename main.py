@@ -166,6 +166,7 @@ def gen_clients(args, train_datasets, test_datasets, model):
 
 def main():
     wandb.login()
+    
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
@@ -184,7 +185,8 @@ def main():
     server = Server(args, train_clients, test_clients, model, metrics, wandb)
     server.train()
 
+    wandb.finish()
+
 
 if __name__ == '__main__':    
     main()
-    wandb.finish()

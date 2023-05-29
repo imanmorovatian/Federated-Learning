@@ -199,9 +199,22 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
 
 # added by myself
-data/femnist/data
+data/femnist/data/all_data
+
+data/femnist/data/iid/rem_user_data
+data/femnist/data/iid/sampled_data
+
+data/femnist/data/niid/rem_user_data
+data/femnist/data/niid/sampled_data
+
+data/femnist/data/intermediate
+
+data/femnist/data/raw_data
+
 data/femnist/meta
 
 wandb/
 
 stat.txt
+
+*.png
