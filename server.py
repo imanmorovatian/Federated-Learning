@@ -18,7 +18,7 @@ class Server:
 
         wandb.init(
         project = 'narenji', 
-        name = 'First Phase Attempt: 1', # set the name of experiment
+        name = 'First Phase', # set the name of experiment
         config={
             'architecture': self.args.model,
             'dataset': self.args.dataset,
@@ -26,7 +26,8 @@ class Server:
             'batch_size': self.args.bs,
             'learning_rate': self.args.lr,
             'momentum': self.args.m,
-            'weight_decay': self.args.wd
+            'weight_decay': self.args.wd,
+            'mode': 'niid' if self.args.niid else 'iid'
             }
         )
 
