@@ -76,7 +76,7 @@ class Server:
             updates_temp = self.train_round(clients_temp)
             self.aggregate(updates_temp) # update self.model
 
-            if r % 2 == 0:
+            if r % 20 == 0:
                 print('Round: ', r+1)
                 self.eval_train()
                 self.test()
