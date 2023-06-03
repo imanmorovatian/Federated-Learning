@@ -50,7 +50,12 @@ def model_init(args):
         model.fc = nn.Linear(in_features=512, out_features=get_dataset_num_classes(args.dataset))
         return model
     if args.model == 'cnn':
-        return CNN()
+        model = CNN()
+        nn.init.xavier_uniform_(model.layer1[0].weight)
+        nn.init.xavier_uniform_(model.layer2[0].weight)
+        nn.init.xavier_uniform_(model.fc1[1].weight)
+        nn.init.xavier_uniform_(model.fc2[1].weight)
+        return model
 
 
 def get_transforms(args):
