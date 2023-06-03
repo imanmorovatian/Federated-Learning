@@ -64,7 +64,18 @@ class Client:
         :return: length of the local dataset, copy of the model parameters
         """
         # TODO: missing code here! -----------> ##### DONE :)
-        local_optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=self.args.m, weight_decay=self.args.wd)
+        CNN_WEIGHT_DECAY = 1e-5
+        FC_WEIGHT_DECAY = 1e-3
+        local_optimizer = optimizer = optim.SGD([
+            {'params': self.model.layer1.parameters(), 'weight_decay': CNN_WEIGHT_DECAY},
+            {'params': self.model.layer2.parameters(), 'weight_decay': CNN_WEIGHT_DECAY},
+            {'params': self.model.fc1.parameters(), 'weight_decay': FC_WEIGHT_DECAY},
+            {'params': self.model.fc2.parameters(), 'weight_decay': FC_WEIGHT_DECAY}
+            ],
+            lr=self.args.lr,
+            momentum=self.args.m
+        )
+
         for epoch in range(self.args.num_epochs):
             # TODO: missing code here! -----------> ##### DONE :)
             self.run_epoch(epoch, local_optimizer)
