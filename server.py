@@ -32,8 +32,20 @@ class Server:
         )
 
     def select_clients(self):
+        num_high_prob = int(len(self.train_clients) * self.args.sp / 100)
+        selected_clients = np.random.choice(self.train_clients, num_high_prob, replace=False)
+
+        probs = [0]*len(self.train_clients)
+
+        for i, client in enumerate(self.train_clients):
+            if client in selected_clients:
+                probs[i] = self.args.sp / num_high_prob
+            else:
+                probs[i] = (1 - self.args.sp) / (len(self.train_clients) - num_high_prob)
+
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
-        return np.random.choice(self.train_clients, num_clients, replace=False)
+
+        return np.choice(self.train_clients, num_clients, p=probs)
 
     def train_round(self, clients):
         """
