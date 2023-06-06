@@ -16,13 +16,13 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         # self.wandb = wandb
 
-        with open(f'{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.txt', 'w') as config_txt:
+        with open(f'Phase2_{self.args.sp}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.txt', 'w') as config_txt:
             config_txt.write(f'epochs: {self.args.num_epochs}\n')
             config_txt.write(f'batch_size: {self.args.bs}\n')
             config_txt.write(f'number of clients: {self.args.clients_per_round}\n')
             config_txt.write(f'mode: {self.args.niid}\n')
         
-        with open(f'{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'w') as result_txt:
+        with open(f'Phase2_{self.args.sp}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'w') as result_txt:
             result_txt.write('Type,Loss,Overall Accuracy,Mean Accuracy\n')
 
         # wandb.init(
@@ -41,8 +41,21 @@ class Server:
         # )
 
     def select_clients(self):
+        num_high_prob = int(len(self.train_clients) * self.args.sp / 100)
+        selected_clients = np.random.choice(self.train_clients, num_high_prob, replace=False)
+
+        probs = [0]*len(self.train_clients)
+
+        for i, client in enumerate(self.train_clients):
+            if client in selected_clients:
+                probs[i] = self.args.sp / num_high_prob
+            else:
+                probs[i] = (1 - self.args.sp) / (len(self.train_clients) - num_high_prob)
+
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
-        return np.random.choice(self.train_clients, num_clients, replace=False)
+        
+        return np.random.choice(self.train_clients, num_clients, p=probs)
+    
 
     def train_round(self, clients):
         """
@@ -109,7 +122,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
         
-        with open(f'{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'a') as result_csv:
+        with open(f'Phase2_{self.args.sp}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'a') as result_csv:
             result_csv.write(f'Train,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
@@ -136,7 +149,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
 
-        with open(f'{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'a') as result_csv:
+        with open(f'Phase2_{self.args.sp}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'a') as result_csv:
             result_csv.write(f'Test,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
