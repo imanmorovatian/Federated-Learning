@@ -16,18 +16,23 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         self.wandb = wandb
 
+        mode = 'iid'
+        if self.args.niid:
+            mode = 'niid'
+
         wandb.init(
         project = 'narenji', 
-        name = 'First Phase', # set the name of experiment
+        name = f'2nd Phase -> Probability: {self.args.sp} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {mode}',
         config={
-            'architecture': self.args.model,
-            'dataset': self.args.dataset,
             'epochs': self.args.num_epochs,
+            'number_of_clients': self.args.clients_per_round,
             'batch_size': self.args.bs,
             'learning_rate': self.args.lr,
             'momentum': self.args.m,
-            'weight_decay': self.args.wd,
-            'mode': 'niid' if self.args.niid else 'iid'
+            'cnn_weight_decay': '1e-5',
+            'fc_weight_decay': '1e-3',
+            'mode': mode,
+            'probability': self.args.sp
             }
         )
 
@@ -44,8 +49,8 @@ class Server:
                 probs[i] = (1 - self.args.sp) / (len(self.train_clients) - num_high_prob)
 
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
-
-        return np.choice(self.train_clients, num_clients, p=probs)
+        
+        return np.random.choice(self.train_clients, num_clients, p=probs)
 
     def train_round(self, clients):
         """
