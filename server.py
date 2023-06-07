@@ -52,6 +52,10 @@ class Server:
             else:
                 probs[i] = (1 - self.args.sp) / (len(self.train_clients) - num_high_prob)
 
+
+        probs_sum = sum(probs)
+        probs = [x / probs_sum for x in probs]
+
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
         
         return np.random.choice(self.train_clients, num_clients, p=probs)
