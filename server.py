@@ -16,13 +16,13 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         self.wandb = wandb
 
-        mode = 'iid'
+        self.mode = 'iid'
         if self.args.niid:
-            mode = 'niid'
+            self.mode = 'niid'
 
         wandb.init(
         project = 'narenji', 
-        name = f'2nd Phase -> Probability: {self.args.sp} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {mode}',
+        name = f'2nd Phase -> Perc. of Clients{self.args.sel_per} - Prob.: {self.args.sp} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
         config={
             'epochs': self.args.num_epochs,
             'number_of_clients': self.args.clients_per_round,
@@ -31,28 +31,30 @@ class Server:
             'momentum': self.args.m,
             'cnn_weight_decay': '1e-5',
             'fc_weight_decay': '1e-3',
-            'mode': mode,
-            'probability': self.args.sp
+            'mode': self.mode,
+            'probability': self.args.prob,
+            'percentage_of_clients': self.args.sel_per
             }
         )
 
     def select_clients(self):
-        num_high_prob = int(len(self.train_clients) * self.args.sp / 100)
+        num_high_prob = int(len(self.train_clients) * self.args.sel_per)
         selected_clients = np.random.choice(self.train_clients, num_high_prob, replace=False)
 
         probs = [0]*len(self.train_clients)
 
         for i, client in enumerate(self.train_clients):
             if client in selected_clients:
-                probs[i] = self.args.sp / num_high_prob
+                probs[i] = self.args.prob / num_high_prob
             else:
-                probs[i] = (1 - self.args.sp) / (len(self.train_clients) - num_high_prob)
-            
+                probs[i] = (1 - self.args.prob) / (len(self.train_clients) - num_high_prob)
+
+
         probs_sum = sum(probs)
         probs = [x / probs_sum for x in probs]
 
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
-    
+        
         return np.random.choice(self.train_clients, num_clients, p=probs)
 
     def train_round(self, clients):
