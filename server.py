@@ -16,19 +16,19 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         # self.wandb = wandb
 
-        mode = 'iid'
+        self.mode = 'iid'
         if self.args.niid:
             mode = 'niid'
 
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{mode}.txt', 'w') as config_txt:
+        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.txt', 'w') as config_txt:
             config_txt.write(f'epochs: {self.args.num_epochs}\n')
             config_txt.write(f'batch_size: {self.args.bs}\n')
             config_txt.write(f'number of clients: {self.args.clients_per_round}\n')
             config_txt.write(f'percentage of clients with specific selection probability: {self.args.sel_per}\n')
             config_txt.write(f'specific selection probability: {self.args.prob}\n')
-            config_txt.write(f'mode: {self.args.niid}\n')
+            config_txt.write(f'mode: {self.mode}\n')
         
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{mode}.csv', 'w') as result_txt:
+        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'w') as result_txt:
             result_txt.write('Type,Loss,Overall Accuracy,Mean Accuracy\n')
 
         # wandb.init(
@@ -132,7 +132,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
         
-        with open(f'Phase2_{self.args.sp}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.args.niid}.csv', 'a') as result_csv:
+        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'a') as result_csv:
             result_csv.write(f'Train,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
@@ -159,7 +159,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
 
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{mode}.csv', 'a') as result_csv:
+        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'a') as result_csv:
             result_csv.write(f'Test,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
