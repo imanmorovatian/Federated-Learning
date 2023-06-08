@@ -23,7 +23,7 @@ class Server:
         with open(f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}.txt', 'w') as config_txt:
             config_txt.write(f'epochs: {self.args.num_epochs}\n')
             config_txt.write(f'batch_size: {self.args.bs}\n')
-            config_txt.write(f'Number of candidates': {self.args.num_cand}\n')
+            config_txt.write(f'Number of candidates: {self.args.num_cand}\n')
             config_txt.write(f'number of clients: {self.args.clients_per_round}\n')
             config_txt.write(f'mode: {self.mode}\n')
         
