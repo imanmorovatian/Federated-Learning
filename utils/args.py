@@ -5,8 +5,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--dataset', type=str, choices=['idda', 'femnist'], required=True, help='dataset name')
-    parser.add_argument('--niid', action='store_true', default=False,
-                        help='Run the experiment with the non-IID partition (IID by default). Only on FEMNIST dataset.')
+    parser.add_argument('--niid', action='store_true', default=False, help='Run the experiment with the non-IID partition (IID by default). Only on FEMNIST dataset.')
     parser.add_argument('--model', type=str, choices=['deeplabv3_mobilenetv2', 'resnet18', 'cnn'], help='model name')
     parser.add_argument('--num_rounds', type=int, help='number of rounds')
     parser.add_argument('--num_epochs', type=int, help='number of local epochs')
@@ -22,4 +21,5 @@ def get_parser():
     parser.add_argument('--test_interval', type=int, default=10, help='test interval')
     parser.add_argument('--sel_per', type=float, default=0.1, help='percentage of clients with specific probability') # added by ourselves
     parser.add_argument('--prob', type=float, default=0.5, help='selection probability for some clients') # added by ourselves
+    parser.add_argument('--num_cand', type=int, default=10, help='number of candidates for power-of-choice strategy') # added by ourselves
     return parser
