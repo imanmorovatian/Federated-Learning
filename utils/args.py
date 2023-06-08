@@ -22,4 +22,5 @@ def get_parser():
     parser.add_argument('--test_interval', type=int, default=10, help='test interval')
     parser.add_argument('--sel_per', type=float, default=0.1, help='percentage of clients with specific probability') # added by ourselves
     parser.add_argument('--prob', type=float, default=0.5, help='selection probability for some clients') # added by ourselves
+    parser.add_argument('--num_cand', type=int, default=10, help='number of candidates for power-of-choice strategy') # added by ourselves
     return parser
