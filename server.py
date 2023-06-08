@@ -18,7 +18,7 @@ class Server:
 
         self.mode = 'iid'
         if self.args.niid:
-            mode = 'niid'
+            self.mode = 'niid'
 
         with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.txt', 'w') as config_txt:
             config_txt.write(f'epochs: {self.args.num_epochs}\n')
