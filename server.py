@@ -1,6 +1,6 @@
 import copy
 from collections import OrderedDict
-
+from utils.stream_metrics import StreamClsMetrics
 import numpy as np
 import torch
 
@@ -20,7 +20,7 @@ class Server:
         if self.args.niid:
             self.mode = 'niid'
 
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.txt', 'w') as config_txt:
+        with open(f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}.txt', 'w') as config_txt:
             config_txt.write(f'epochs: {self.args.num_epochs}\n')
             config_txt.write(f'batch_size: {self.args.bs}\n')
             config_txt.write(f'number of clients: {self.args.clients_per_round}\n')
@@ -28,7 +28,7 @@ class Server:
             config_txt.write(f'specific selection probability: {self.args.prob}\n')
             config_txt.write(f'mode: {self.mode}\n')
         
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'w') as result_txt:
+        with open(f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}.csv', 'w') as result_txt:
             result_txt.write('Type,Loss,Overall Accuracy,Mean Accuracy\n')
 
         # wandb.init(
@@ -47,24 +47,34 @@ class Server:
         # )
 
     def select_clients(self):
-        num_high_prob = int(len(self.train_clients) * self.args.sel_per)
-        selected_clients = np.random.choice(self.train_clients, num_high_prob, replace=False)
+        all_data = 0
+        for client in self.train_clients:
+            all_data += len(client.test_loader)
 
-        probs = [0]*len(self.train_clients)
-
+        probs = [0] * len(self.train_clients)
         for i, client in enumerate(self.train_clients):
-            if client in selected_clients:
-                probs[i] = self.args.prob / num_high_prob
-            else:
-                probs[i] = (1 - self.args.prob) / (len(self.train_clients) - num_high_prob)
+            probs[i] = len(client.test_loader) / all_data
 
+        candidates = np.random.choice(self.train_clients, self.args.num_cand, p=probs, replace=False)
 
-        probs_sum = sum(probs)
-        probs = [x / probs_sum for x in probs]
+        temp = StreamClsMetrics(62, 'temp') # test function of the client class will be used. One argumetn
+                                            # of the function is StreamClsMetrics object, so one object of that
+                                            # type is passed. It is just for compatibility with the function prototype
+                                            # and this object is not used anywhere else
+        clients = []
+        for candidate in candidates:
+            loss = candidate.test(temp)
+            clients.append( (loss, candidate) )
 
-        num_clients = min(self.args.clients_per_round, len(self.train_clients))
+        sorted_clients = sorted(clients, key=lambda pair: pair[0], reverse=True)
         
-        return np.random.choice(self.train_clients, num_clients, p=probs)
+        num_clients = min(self.args.clients_per_round, len(sorted_clients))
+
+        top_clients = sorted_clients[:num_clients]
+
+        selected_clients = [pair[1] for pair in top_clients]
+
+        return selected_clients
     
 
     def train_round(self, clients):
@@ -132,7 +142,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
         
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'a') as result_csv:
+        with open(f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}.csv', 'a') as result_csv:
             result_csv.write(f'Train,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
@@ -159,7 +169,7 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
 
-        with open(f'Phase2_{self.args.sel_per}_{self.args.prob}_{self.args.num_epochs}_{self.args.clients_per_round}_{self.mode}.csv', 'a') as result_csv:
+        with open(f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}.csv', 'a') as result_csv:
             result_csv.write(f'Test,{loss},{overal_acc},{mean_acc}\n')
         
         # self.wandb.log({
