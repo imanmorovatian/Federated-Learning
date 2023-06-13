@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import ExponentialLR
-from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
 from models.cnn import CNN
+from torch.utils.data import ConcatDataset, DataLoader
+from utils.args import get_parser
+from main import set_seed, model_init, get_datasets, gen_clients
 import wandb
 
 
@@ -68,54 +68,55 @@ def validation_or_test(data_loader, net, loss_function, device):
   return cumulative_loss / samples, cumulative_accuracy / samples * 100
 
 
-def plot_accuracy(train_accuracy, val_accuracy):
-  plt.plot(train_accuracy, label='Train')
-  plt.plot(val_accuracies, label='Validation')
-  plt.xlabel('epoch')
-  plt.ylabel('accuracy')
-  plt.title('Train Accuracy Vs Validation Accuracy')
-  plt.legend()
-
-
-def plot_loss(train_loss, val_loss):
-  plt.plot(train_loss, label='Train')
-  plt.plot(val_loss, label='Validation')
-  plt.xlabel('epoch')
-  plt.ylabel('loss')
-  plt.title('Train Loss Vs Validation Loss')
-  plt.legend()
-
-
 wandb.login()
 
-ATTEMPT = 8 # always increament this variable by one and set the new value for that
+#ATTEMPT = 8 # always increament this variable by one and set the new value for that
             # for example if the values is 1, you can set it to 2, or if it is 2
             # you should set it for 3
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
-EPOCHS = 100
+EPOCHS = 50
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
 CNN_WEIGHT_DECAY = 1e-5
 FC_WEIGHT_DECAY = 1e-3
 
-train_set = datasets.EMNIST(root='data', split='byclass',train=True, download=True,
-                            transform=transforms.Compose([transforms.ToTensor()])
-                           )
+parser = get_parser()
+args = parser.parse_args()
+set_seed(args.seed)
 
-test_set = datasets.EMNIST(root='data', split='byclass', train=False, download=True,
-                           transform=transforms.Compose([transforms.ToTensor()])
-                          )
+model = model_init(args)
+#model.cuda()
 
-entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)
+print('Generate datasets...')
+train_datasets, test_datasets = get_datasets(args)
+print('Done.')
+
+train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
+
+train_set = [client.dataset for client in train_clients]
+test_set = [client.dataset for client in test_clients]
+
+train_set = ConcatDataset(train_set)
+test_set = ConcatDataset(test_set)
+
+#train_set = datasets.EMNIST(root='data', split='byclass',train=True, download=True,
+#                            transform=transforms.Compose([transforms.ToTensor()])
+#                           )
+
+#test_set = datasets.EMNIST(root='data', split='byclass', train=False, download=True,
+#                           transform=transforms.Compose([transforms.ToTensor()])
+#                          )
+
+entire_trainset = DataLoader(train_set, shuffle=True)
 
 split_train_size = int(0.8*(len(entire_trainset)))  # use 80% as train set
 split_valid_size = len(entire_trainset) - split_train_size  # use 20% as validation set
 train_set, val_set = torch.utils.data.random_split(train_set, [split_train_size, split_valid_size]) 
 
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = torch.utils.data.DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True)
-test_loader = torch.utils.data.DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
 net = CNN().to(DEVICE)
 nn.init.xavier_uniform_(net.layer1[0].weight)
@@ -134,27 +135,20 @@ optimizer = optim.SGD(
     ],
     lr=LEARNING_RATE,
     momentum=MOMENTUM
-    )
+)
 
 wandb.init(
-      # Set the project where this run will be logged
       project = 'narenji', 
-      # Se the run name
-      name = f'Centeralized Training attempt:{ATTEMPT}',
-
-      # Track hyperparameters and run metadata
+      name = f'3th Phase: Centeralized Training',
       config={
-      'architecture': "CNN",
-      'dataset': 'EMNIST',
-      'epochs': EPOCHS,
-      'batch_size': BATCH_SIZE,
-      'learning_rate': LEARNING_RATE,
-      'momentum': MOMENTUM,
-      'weight_decay_cnn': CNN_WEIGHT_DECAY,
-      'weight_decay_fc': FC_WEIGHT_DECAY
+        'epochs': EPOCHS,
+        'batch_size': BATCH_SIZE,
+        'learning_rate': LEARNING_RATE,
+        'momentum': MOMENTUM,
+        'weight_decay_cnn': CNN_WEIGHT_DECAY,
+        'weight_decay_fc': FC_WEIGHT_DECAY
       }
-
-      )
+)
 
 train_losses = []
 train_accuracies = []
@@ -181,11 +175,6 @@ for epoch in range(EPOCHS):
   
   print(f'Epoch: {epoch+1}/{EPOCHS}')
   print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f} *** Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
-
-
-plot_accuracy(train_accuracies, val_accuracies)
-
-plot_loss(train_losses, val_losses)
 
 test_loss, test_accuracy = validation_or_test(test_loader, net, loss_function, DEVICE)
 print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
