@@ -44,7 +44,6 @@ class Client:
         :param optimizer: optimizer used for the local training
         """
         self.model.train() # set model to training mode
-
         for cur_step, (images, labels) in enumerate(self.train_loader):
             # TODO: missing code here!
             images = images.to('cuda')

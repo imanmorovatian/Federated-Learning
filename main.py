@@ -12,6 +12,7 @@ import datasets.ss_transforms as sstr
 import datasets.np_transforms as nptr
 
 from torch import nn
+import torchvision.transforms as T
 from client import Client
 from datasets.femnist import Femnist
 from server import Server
@@ -21,7 +22,7 @@ from models.deeplabv3 import deeplabv3_mobilenetv2
 from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
 
 from models.cnn import CNN
-# import wandb
+import wandb
 
 def set_seed(random_seed):
     random.seed(random_seed)
@@ -37,6 +38,8 @@ def get_dataset_num_classes(dataset):
     if dataset == 'idda':
         return 16
     if dataset == 'femnist':
+        return 62
+    if dataset == 'rfemnist':
         return 62
     raise NotImplementedError
 
@@ -122,7 +125,7 @@ def get_datasets(args):
                                                 client_name='test_diff_dom')
         test_datasets = [test_same_dom_dataset, test_diff_dom_dataset]
 
-    elif args.dataset == 'femnist':
+    elif args.dataset == 'femnist' or args.dataset == 'rfemnist':
         niid = args.niid
         train_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'train')
         test_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'test')
@@ -136,7 +139,6 @@ def get_datasets(args):
             train_datasets.append(Femnist(data, train_transforms, user))
         for user, data in test_data.items():
             test_datasets.append(Femnist(data, test_transforms, user))
-
     else:
         raise NotImplementedError
 
@@ -166,11 +168,33 @@ def gen_clients(args, train_datasets, test_datasets, model):
     for i, datasets in enumerate([train_datasets, test_datasets]):
         for ds in datasets:
             clients[i].append(Client(args, ds, model, test_client=i == 1))
-    return clients[0], clients[1]
+
+    if args.dataset == 'femnist':
+        return clients[0], clients[1]
+    
+    elif args.dataset == 'rfemnist':
+        all_indices = [i for i in range(len(clients[0]))]
+        random_indices = np.random.choice(all_indices, 1000, replace=False)
+        angles = (0, 15, 30, 45, 60, 75)
+        train_clients = []
+
+        for i in range(len(clients[0])):
+            client = clients[0][i]
+
+            if i in random_indices:
+                client.dataset.transform = nptr.Compose([
+                    nptr.ToTensor(),
+                    nptr.RandomRotation(degrees=(angles[i%len(angles)], angles[i%len(angles)])),
+                    nptr.Normalize((0.5,), (0.5,))
+                ])
+
+            train_clients.append(client)
+
+        return train_clients, clients[1]
 
 
 def main():
-    # wandb.login()
+    wandb.login()
     
     parser = get_parser()
     args = parser.parse_args()
@@ -187,10 +211,10 @@ def main():
 
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
-    server = Server(args, train_clients, test_clients, model, metrics)
+    server = Server(args, train_clients, test_clients, model, metrics, wandb)
     server.train()
 
-    # wandb.finish()
+    wandb.finish()
 
 
 if __name__ == '__main__':    
