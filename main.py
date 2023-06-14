@@ -173,24 +173,28 @@ def gen_clients(args, train_datasets, test_datasets, model):
         return clients[0], clients[1]
     
     elif args.dataset == 'rfemnist':
-        all_indices = [i for i in range(len(clients[0]))]
-        random_indices = np.random.choice(all_indices, 1000, replace=False)
+        train_clinets = []
+        test_clients = []
         angles = (0, 15, 30, 45, 60, 75)
-        train_clients = []
+        random_clients = np.random.choice(clients[0], 1000, replace=False)
+        groups = np.array_split(random_clients, len(angles))
 
-        for i in range(len(clients[0])):
-            client = clients[0][i]
-
-            if i in random_indices:
+        for i in range(len(groups)):
+            group = groups[i]
+            for client in group:
                 client.dataset.transform = nptr.Compose([
                     nptr.ToTensor(),
-                    nptr.RandomRotation(degrees=(angles[i%len(angles)], angles[i%len(angles)])),
+                    nptr.RandomRotation(degrees=(angles[i], angles[i])),
                     nptr.Normalize((0.5,), (0.5,))
                 ])
 
-            train_clients.append(client)
+                if i == args.dt:
+                    test_clients.append(client)
+                else:
+                    train_clinets.append(client)
 
-        return train_clients, clients[1]
+
+        return train_clinets, test_clients
 
 
 def main():
@@ -211,6 +215,7 @@ def main():
 
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
+    
     server = Server(args, train_clients, test_clients, model, metrics, wandb)
     server.train()
 

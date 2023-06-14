@@ -74,7 +74,7 @@ wandb.login()
             # for example if the values is 1, you can set it to 2, or if it is 2
             # you should set it for 3
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
-EPOCHS = 50
+EPOCHS = 100
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
@@ -139,8 +139,9 @@ optimizer = optim.SGD(
 
 wandb.init(
       project = 'narenji', 
-      name = f'3th Phase: Centeralized Training',
+      name = f'3th Phase: Centeralized Training Domain Test {args.dt}',
       config={
+        'domain test': args.dt,
         'epochs': EPOCHS,
         'batch_size': BATCH_SIZE,
         'learning_rate': LEARNING_RATE,

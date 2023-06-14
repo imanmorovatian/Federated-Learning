@@ -22,8 +22,9 @@ class Server:
 
         wandb.init(
             project = 'narenji', 
-            name = f'3th Phase -> Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
+            name = f'3th Phase -> Domain Test: {self.args.dt} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
             config={
+                'domain test': self.args.dt,
                 'epochs': self.args.num_epochs,
                 'number_of_clients': self.args.clients_per_round,
                 'batch_size': self.args.bs,
