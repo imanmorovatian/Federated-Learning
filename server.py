@@ -28,6 +28,8 @@ class Server:
                 'epochs': self.args.num_epochs,
                 'number_of_clients': self.args.clients_per_round,
                 'batch_size': self.args.bs,
+                'l2r_c': self.args.l2r,
+                'CMI_c': self.args.cmi,
                 'mode': self.mode
                 }
         )
