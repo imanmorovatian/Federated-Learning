@@ -24,4 +24,6 @@ def get_parser():
     parser.add_argument('--prob', type=float, default=0.5, help='selection probability for some clients') # added by ourselves
     parser.add_argument('--num_cand', type=int, default=10, help='number of candidates for power-of-choice strategy') # added by ourselves
     parser.add_argument('--dt', type=int, choices=[0, 1, 2, 3, 4, 5], default=0, help='the domain will be used at the domain test') # added by ourselves
+    parser.add_argument('--l2r', type=float, default=0.01, help='L2R coefficient') # added by ourselves
+    parser.add_argument('--cmi', type=float, default=0.001, help='Conditional Mutual Information') # added by ourselves
     return parser

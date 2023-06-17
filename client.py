@@ -2,6 +2,7 @@ import copy
 import torch
 
 from torch import optim, nn
+import torch.nn.functional as F
 from collections import defaultdict
 from torch.utils.data import DataLoader
 
@@ -15,11 +16,14 @@ class Client:
         self.dataset = dataset
         self.name = self.dataset.client_name
         self.model = model
-        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
-            if not test_client else None
+        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='none')
         self.reduction = HardNegativeMining() if self.args.hnm else MeanReduction()
+
+        self.r_mu = nn.Parameter(torch.zeros(62, 1024))
+        self.r_sigma = nn.Parameter(torch.ones(62, 1024))
+        self.C = nn.Parameter(torch.ones([]))
 
     def __str__(self):
         return self.name
@@ -48,11 +52,32 @@ class Client:
             # TODO: missing code here!
             images = images.to('cuda')
             labels = labels.to('cuda')
-
+            
             optimizer.zero_grad()
+
+            z, z_mu, z_sigma = self.model.featurize(images)
+
             outputs = self._get_outputs(images)
             loss = self.criterion(outputs, labels)
             loss = self.reduction(loss, labels)
+
+            regL2R = torch.zeros_like(loss)
+            regCMI = torch.zeros_like(loss)
+
+            regL2R = z.norm(dim=1).mean()
+            loss = loss + self.args.l2r * regL2R
+
+            r_sigma_softplus = F.softplus(self.r_sigma)
+            r_mu = self.r_mu[labels.cpu()]
+            r_mu = r_mu.cuda()
+            r_sigma = r_sigma_softplus[labels.cpu()]
+            r_sigma = r_sigma.cuda()
+            z_mu_scaled = z_mu * self.C
+            z_sigma_scaled = z_sigma * self.C
+            regCMI = torch.log(r_sigma) - torch.log(z_sigma_scaled) + (z_sigma_scaled**2+(z_mu_scaled-r_mu)**2)/(2*r_sigma**2) - 0.5
+            regCMI = regCMI.sum(1).mean()
+            loss = loss + self.args.cmi*regCMI
+            
             loss.backward()
             optimizer.step()
 
