@@ -2,18 +2,18 @@ import copy
 from collections import OrderedDict
 from utils.stream_metrics import StreamClsMetrics
 import numpy as np
-import torch
 
 
 class Server:
 
-    def __init__(self, args, train_clients, test_clients, model, metrics, wandb):
+    def __init__(self, args, train_clients, test_clients, model, metrics, bank, wandb):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
         self.model = model
         self.metrics = metrics
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
+        self.bank = bank
         self.wandb = wandb
 
         self.mode = 'iid'
@@ -22,14 +22,12 @@ class Server:
 
         wandb.init(
             project = 'narenji', 
-            name = f'3th Phase (FedSR) -> Domain Test: {self.args.dt} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
+            name = f'4th Phase (FedDG) -> Domain Test: {self.args.dt} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
             config={
                 'domain test': self.args.dt,
                 'epochs': self.args.num_epochs,
                 'number_of_clients': self.args.clients_per_round,
                 'batch_size': self.args.bs,
-                'l2r_c': self.args.l2r,
-                'CMI_c': self.args.cmi,
                 'mode': self.mode
                 }
         )
@@ -44,10 +42,11 @@ class Server:
             :param clients: list of all the clients to train
             :return: model updates gathered from the clients, to be aggregated
         """
+        train_client_names = [client.name for client in clients]
         updates = []
         for i, c in enumerate(clients):
             # TODO: missing code here!
-            (len, parm) = c.train()
+            (len, parm) = c.train(self.bank, train_client_names)
             updates.append((len, parm))
         return updates
 

@@ -20,6 +20,7 @@ from utils.args import get_parser
 from datasets.idda import IDDADataset
 from models.deeplabv3 import deeplabv3_mobilenetv2
 from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
+from utils.bank import Bank
 
 from models.cnn import CNN
 import wandb
@@ -199,7 +200,7 @@ def gen_clients(args, train_datasets, test_datasets, model):
 
 def main():
     wandb.login()
-    
+
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
@@ -216,7 +217,9 @@ def main():
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
     
-    server = Server(args, train_clients, test_clients, model, metrics, wandb)
+    bank = Bank(train_clients)
+
+    server = Server(args, train_clients, test_clients, model, metrics, bank, wandb)
     server.train()
 
     wandb.finish()
