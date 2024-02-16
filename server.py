@@ -1,6 +1,6 @@
 import copy
 from collections import OrderedDict
-
+from utils.stream_metrics import StreamClsMetrics
 import numpy as np
 import torch
 
@@ -16,24 +16,58 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         self.wandb = wandb
 
+        self.mode = 'iid'
+        if self.args.niid:
+            self.mode = 'niid'
+
         wandb.init(
         project = 'narenji', 
-        name = 'First Phase', # set the name of experiment
+        name = f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
         config={
-            'architecture': self.args.model,
-            'dataset': self.args.dataset,
             'epochs': self.args.num_epochs,
+            'number_of_clients': self.args.clients_per_round,
             'batch_size': self.args.bs,
             'learning_rate': self.args.lr,
             'momentum': self.args.m,
-            'weight_decay': self.args.wd,
-            'mode': 'niid' if self.args.niid else 'iid'
+            'cnn_weight_decay': '1e-5',
+            'fc_weight_decay': '1e-3',
+            'mode': self.mode,
+            'probability': self.args.prob,
+            'percentage_of_clients': self.args.sel_per
             }
         )
 
     def select_clients(self):
-        num_clients = min(self.args.clients_per_round, len(self.train_clients))
-        return np.random.choice(self.train_clients, num_clients, replace=False)
+
+        all_data = 0
+        for client in self.train_clients:
+            all_data += len(client.test_loader)
+
+        probs = [0] * len(self.train_clients)
+        for i, client in enumerate(self.train_clients):
+            probs[i] = len(client.test_loader) / all_data
+
+        candidates = np.random.choice(self.train_clients, self.args.num_cand, p=probs, replace=False)
+
+        temp = StreamClsMetrics(62, 'temp') # test function of the client class will be used. One argumetn
+                                            # of the function is StreamClsMetrics object, so one object of that
+                                            # type is passed. It is just for compatibility with the function prototype
+                                            # and this object is not used anywhere else
+        clients = []
+        for candidate in candidates:
+            loss = candidate.test(temp)
+            clients.append( (loss, candidate) )
+
+        sorted_clients = sorted(clients, key=lambda pair: pair[0], reverse=True)
+        
+        num_clients = min(self.args.clients_per_round, len(sorted_clients))
+
+        top_clients = sorted_clients[:num_clients]
+
+        selected_clients = [pair[1] for pair in top_clients]
+
+        return selected_clients
+        
 
     def train_round(self, clients):
         """
