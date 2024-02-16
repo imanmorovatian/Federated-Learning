@@ -6,20 +6,6 @@ from torchvision import datasets, transforms
 
 import optuna
 
-def get_data():
-  '''This function download train and test datasets and return them'''
-
-  train_set = datasets.EMNIST(
-      root='data', split='byclass',train=True, download=True,
-      transform=transforms.Compose([transforms.ToTensor()])
-                           )
-
-  test_set = datasets.EMNIST(
-      root='data', split='byclass', train=False, download=True,
-      transform=transforms.Compose([transforms.ToTensor()])
-                          )
-  
-  return train_set, test_set
 
 class CNN(nn.Module):
     '''This class defines the CNN described in the instructions'''
@@ -59,6 +45,23 @@ class CNN(nn.Module):
         out = self.fc2(out)
         
         return out
+    
+
+def get_data():
+  '''This function download train and test datasets and return them'''
+
+  train_set = datasets.EMNIST(
+      root='data', split='byclass',train=True, download=True,
+      transform=transforms.Compose([transforms.ToTensor()])
+                           )
+
+  test_set = datasets.EMNIST(
+      root='data', split='byclass', train=False, download=True,
+      transform=transforms.Compose([transforms.ToTensor()])
+                          )
+  
+  return train_set, test_set
+
 
 def train(data_loader, net, loss_function, optimizer, device):
   '''This function perform the train process and returns accuracy and 
@@ -93,6 +96,7 @@ def train(data_loader, net, loss_function, optimizer, device):
 
   return cumulative_loss / samples, cumulative_accuracy / samples * 100
 
+
 def validation_or_test(data_loader, net, loss_function, device):
   '''This function perform the validation process and returns accuracy and 
   loss of validation'''
@@ -120,6 +124,7 @@ def validation_or_test(data_loader, net, loss_function, device):
       samples += images.shape[0]
 
   return cumulative_loss / samples, cumulative_accuracy / samples * 100
+
 
 def training_process(optuna_trial, train_set):
     '''Thie function orchestrate the training process. It employs utitily functions
@@ -155,9 +160,9 @@ def training_process(optuna_trial, train_set):
 
     return val_accuracy # this is the accuracy of the last epoch on the validation set
 
+
 def objective(trial, train_set):
   return training_process(trial, train_set)
-
 
 
 train_set, test_set = get_data()

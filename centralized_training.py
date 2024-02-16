@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 from models.cnn import CNN
 from torch.utils.data import ConcatDataset, DataLoader
+from torchvision import datasets, transforms
 from utils.args import get_parser
 from main import set_seed, model_init, get_datasets, gen_clients
-import wandb
+# import wandb
 
 
 def train(data_loader, net, loss_function, optimizer, device):
@@ -68,12 +69,9 @@ def validation_or_test(data_loader, net, loss_function, device):
   return cumulative_loss / samples, cumulative_accuracy / samples * 100
 
 
-wandb.login()
+# wandb.login()
 
-#ATTEMPT = 8 # always increament this variable by one and set the new value for that
-            # for example if the values is 1, you can set it to 2, or if it is 2
-            # you should set it for 3
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 100
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
@@ -86,27 +84,28 @@ args = parser.parse_args()
 set_seed(args.seed)
 
 model = model_init(args)
-#model.cuda()
 
 print('Generate datasets...')
 train_datasets, test_datasets = get_datasets(args)
 print('Done.')
 
-train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
+if args.dataset == 'femnist':
+  train_set = datasets.EMNIST(root='data', split='byclass',train=True, download=True,
+                           transform=transforms.Compose([transforms.ToTensor()])
+                          )
+  
+  test_set = datasets.EMNIST(root='data', split='byclass', train=False, download=True,
+                          transform=transforms.Compose([transforms.ToTensor()])
+                         )
+  
+elif args.dataset == 'rfemnist':
+  train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
 
-train_set = [client.dataset for client in train_clients]
-test_set = [client.dataset for client in test_clients]
+  train_set = [client.dataset for client in train_clients]
+  test_set = [client.dataset for client in test_clients]
 
-train_set = ConcatDataset(train_set)
-test_set = ConcatDataset(test_set)
-
-#train_set = datasets.EMNIST(root='data', split='byclass',train=True, download=True,
-#                            transform=transforms.Compose([transforms.ToTensor()])
-#                           )
-
-#test_set = datasets.EMNIST(root='data', split='byclass', train=False, download=True,
-#                           transform=transforms.Compose([transforms.ToTensor()])
-#                          )
+  train_set = ConcatDataset(train_set)
+  test_set = ConcatDataset(test_set)
 
 entire_trainset = DataLoader(train_set, shuffle=True)
 
@@ -137,19 +136,19 @@ optimizer = optim.SGD(
     momentum=MOMENTUM
 )
 
-wandb.init(
-      project = 'narenji', 
-      name = f'3th Phase: Centeralized Training Domain Test {args.dt}',
-      config={
-        'domain test': args.dt,
-        'epochs': EPOCHS,
-        'batch_size': BATCH_SIZE,
-        'learning_rate': LEARNING_RATE,
-        'momentum': MOMENTUM,
-        'weight_decay_cnn': CNN_WEIGHT_DECAY,
-        'weight_decay_fc': FC_WEIGHT_DECAY
-      }
-)
+# wandb.init(
+#       project = 'narenji', 
+#       name = f'3th Phase: Centeralized Training Domain Test {args.dt}',
+#       config={
+#         'domain test': args.dt,
+#         'epochs': EPOCHS,
+#         'batch_size': BATCH_SIZE,
+#         'learning_rate': LEARNING_RATE,
+#         'momentum': MOMENTUM,
+#         'weight_decay_cnn': CNN_WEIGHT_DECAY,
+#         'weight_decay_fc': FC_WEIGHT_DECAY
+#       }
+# )
 
 train_losses = []
 train_accuracies = []
@@ -167,12 +166,12 @@ for epoch in range(EPOCHS):
   val_losses.append(val_loss)
   val_accuracies.append(val_accuracy)
 
-  wandb.log({
-    'Train Loss': train_loss,
-    'Train Accuracy': train_accuracy,
-    'Validation Loss': val_loss,
-    'Validation Accuracy': val_accuracy
-    })
+  # wandb.log({
+  #   'Train Loss': train_loss,
+  #   'Train Accuracy': train_accuracy,
+  #   'Validation Loss': val_loss,
+  #   'Validation Accuracy': val_accuracy
+  #   })
   
   print(f'Epoch: {epoch+1}/{EPOCHS}')
   print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f} *** Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
@@ -180,7 +179,7 @@ for epoch in range(EPOCHS):
 test_loss, test_accuracy = validation_or_test(test_loader, net, loss_function, DEVICE)
 print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
 
-wandb.log({"Test Accuracy": test_accuracy, "Test Loss": test_loss})
+# wandb.log({"Test Accuracy": test_accuracy, "Test Loss": test_loss})
 
-wandb.finish()
+# wandb.finish()
 
