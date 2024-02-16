@@ -22,7 +22,8 @@ from models.deeplabv3 import deeplabv3_mobilenetv2
 from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
 
 from models.cnn import CNN
-import wandb
+# import wandb
+
 
 def set_seed(random_seed):
     random.seed(random_seed)
@@ -62,7 +63,7 @@ def model_init(args):
 
 
 def get_transforms(args):
-    # TODO: test your data augmentation by changing the transforms here!
+    
     if args.model == 'deeplabv3_mobilenetv2':
         train_transforms = sstr.Compose([
             sstr.RandomResizedCrop((512, 928), scale=(0.5, 2.0)),
@@ -101,6 +102,24 @@ def read_femnist_dir(data_dir):
 
 def read_femnist_data(train_data_dir, test_data_dir):
     return read_femnist_dir(train_data_dir), read_femnist_dir(test_data_dir)
+
+
+def set_metrics(args):
+    num_classes = get_dataset_num_classes(args.dataset)
+    if args.model == 'deeplabv3_mobilenetv2':
+        metrics = {
+            'eval_train': StreamSegMetrics(num_classes, 'eval_train'),
+            'test_same_dom': StreamSegMetrics(num_classes, 'test_same_dom'),
+            'test_diff_dom': StreamSegMetrics(num_classes, 'test_diff_dom')
+        }
+    elif args.model == 'resnet18' or args.model == 'cnn':
+        metrics = {
+            'eval_train': StreamClsMetrics(num_classes, 'eval_train'),
+            'test': StreamClsMetrics(num_classes, 'test')
+        }
+    else:
+        raise NotImplementedError
+    return metrics
 
 
 def get_datasets(args):
@@ -145,24 +164,6 @@ def get_datasets(args):
     return train_datasets, test_datasets
 
 
-def set_metrics(args):
-    num_classes = get_dataset_num_classes(args.dataset)
-    if args.model == 'deeplabv3_mobilenetv2':
-        metrics = {
-            'eval_train': StreamSegMetrics(num_classes, 'eval_train'),
-            'test_same_dom': StreamSegMetrics(num_classes, 'test_same_dom'),
-            'test_diff_dom': StreamSegMetrics(num_classes, 'test_diff_dom')
-        }
-    elif args.model == 'resnet18' or args.model == 'cnn':
-        metrics = {
-            'eval_train': StreamClsMetrics(num_classes, 'eval_train'),
-            'test': StreamClsMetrics(num_classes, 'test')
-        }
-    else:
-        raise NotImplementedError
-    return metrics
-
-
 def gen_clients(args, train_datasets, test_datasets, model):
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
@@ -198,7 +199,7 @@ def gen_clients(args, train_datasets, test_datasets, model):
 
 
 def main():
-    wandb.login()
+    # wandb.login()
     
     parser = get_parser()
     args = parser.parse_args()
@@ -216,10 +217,11 @@ def main():
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
     
-    server = Server(args, train_clients, test_clients, model, metrics, wandb)
+    # server = Server(args, train_clients, test_clients, model, metrics, wandb)
+    server = Server(args, train_clients, test_clients, model, metrics)
     server.train()
 
-    wandb.finish()
+    # wandb.finish()
 
 
 if __name__ == '__main__':    
