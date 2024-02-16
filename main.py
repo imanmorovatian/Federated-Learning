@@ -12,6 +12,7 @@ import datasets.ss_transforms as sstr
 import datasets.np_transforms as nptr
 
 from torch import nn
+import torchvision.transforms as T
 from client import Client
 from datasets.femnist import Femnist
 from server import Server
@@ -37,6 +38,8 @@ def get_dataset_num_classes(dataset):
     if dataset == 'idda':
         return 16
     if dataset == 'femnist':
+        return 62
+    if dataset == 'rfemnist':
         return 62
     raise NotImplementedError
 
@@ -122,7 +125,7 @@ def get_datasets(args):
                                                 client_name='test_diff_dom')
         test_datasets = [test_same_dom_dataset, test_diff_dom_dataset]
 
-    elif args.dataset == 'femnist':
+    elif args.dataset == 'femnist' or args.dataset == 'rfemnist':
         niid = args.niid
         train_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'train')
         test_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'test')
@@ -136,7 +139,6 @@ def get_datasets(args):
             train_datasets.append(Femnist(data, train_transforms, user))
         for user, data in test_data.items():
             test_datasets.append(Femnist(data, test_transforms, user))
-
     else:
         raise NotImplementedError
 
@@ -166,7 +168,33 @@ def gen_clients(args, train_datasets, test_datasets, model):
     for i, datasets in enumerate([train_datasets, test_datasets]):
         for ds in datasets:
             clients[i].append(Client(args, ds, model, test_client=i == 1))
-    return clients[0], clients[1]
+
+    if args.dataset == 'femnist':
+        return clients[0], clients[1]
+    
+    elif args.dataset == 'rfemnist':
+        train_clinets = []
+        test_clients = []
+        angles = (0, 15, 30, 45, 60, 75)
+        random_clients = np.random.choice(clients[0], 1000, replace=False)
+        groups = np.array_split(random_clients, len(angles))
+
+        for i in range(len(groups)):
+            group = groups[i]
+            for client in group:
+                client.dataset.transform = nptr.Compose([
+                    nptr.ToTensor(),
+                    nptr.RandomRotation(degrees=(angles[i], angles[i])),
+                    nptr.Normalize((0.5,), (0.5,))
+                ])
+
+                if i == args.dt:
+                    test_clients.append(client)
+                else:
+                    train_clinets.append(client)
+
+
+        return train_clinets, test_clients
 
 
 def main():
@@ -187,6 +215,7 @@ def main():
 
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
+    
     server = Server(args, train_clients, test_clients, model, metrics, wandb)
     server.train()
 

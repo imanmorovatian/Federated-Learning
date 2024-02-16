@@ -133,7 +133,7 @@ class Server:
         print('Total Accuracy: ', round(overal_acc, 2))
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
-        
+                
         self.wandb.log({
             'Train Loss': loss,
             'Train Overal Accuracy': overal_acc,
@@ -157,7 +157,7 @@ class Server:
         print('Total Accuracy: ', round(overal_acc, 2))
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
-
+        
         self.wandb.log({
             'Test Loss': loss,
             'Test Overal Accuracy': overal_acc,
