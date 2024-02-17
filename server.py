@@ -60,7 +60,7 @@ class Server:
         train_client_names = [client.name for client in clients]
         updates = []
         for i, c in enumerate(clients):
-            # TODO: missing code here!
+
             (len, parm) = c.train(self.bank, train_client_names)
             updates.append((len, parm))
         return updates
@@ -71,7 +71,7 @@ class Server:
         :param updates: updates received from the clients
         :return: aggregated parameters
         """
-        # TODO: missing code here!
+
         output = updates[0][1].copy()
         weighted_sum = 0
         weights = 0
@@ -89,7 +89,7 @@ class Server:
         This method orchestrates the training the evals and tests at rounds level
         """
         for r in range(self.args.num_rounds):
-            # TODO: missing code here!
+
             clients_temp = self.select_clients()
             updates_temp = self.train_round(clients_temp)
             self.aggregate(updates_temp) # update self.model
@@ -103,7 +103,7 @@ class Server:
         """
         This method handles the evaluation on the train clients
         """
-        # TODO: missing code here!
+
         loss = 0
         for client in self.train_clients:
             loss += client.test(self.metrics['eval_train'])
@@ -121,7 +121,7 @@ class Server:
         """
             This method handles the test on the test clients
         """
-        # TODO: missing code here!
+
         loss = 0
         for client in self.test_clients:
             loss += client.test(self.metrics['test'])

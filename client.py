@@ -63,7 +63,6 @@ class Client:
             
             self.model.train() # set model to training mode
             for images, labels, ctrs, ctrs_labels in data:
-                # TODO: missing code here!
 
                 # meta-train
                 # compute the first part of the total lost and updated paramaters
@@ -108,7 +107,7 @@ class Client:
         elif self.args.dgm == 'fedsr':
             self.model.train() # set model to training mode
             for cur_step, (images, labels) in enumerate(self.train_loader):
-                # TODO: missing code here!
+
                 images = images.to('cuda')
                 labels = labels.to('cuda')
                 
@@ -146,7 +145,7 @@ class Client:
         (by calling the run_epoch method for each local epoch of training)
         :return: length of the local dataset, copy of the model parameters
         """
-        # TODO: missing code here! -----------> ##### DONE :)
+
         CNN_WEIGHT_DECAY = 1e-5
         FC_WEIGHT_DECAY = 1e-3
         local_optimizer = optimizer = optim.SGD([
@@ -174,13 +173,13 @@ class Client:
         This method tests the model on the local dataset of the client.
         :param metric: StreamMetric object
         """
-        # TODO: missing code here! -----------> ##### DONE :)
+
         samples = 0
         cumulative_loss = 0
         self.model.eval() # set model to evaluation mode
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
-                # TODO: missing code here! -----------> ##### DONE :)
+
                 images = images.to('cuda')
                 labels = labels.to('cuda')
 
