@@ -40,12 +40,15 @@ class Client:
         if self.args.model == 'resnet18' or self.args.model == 'cnn':
             return self.model(images)
 
-    def run_epoch(self, cur_epoch, optimizer, bank, train_client_names):
+    def run_epoch(self, optimizer, bank, train_client_names):
         """
         This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
         :param cur_epoch: current epoch of training
         :param optimizer: optimizer used for the local training
         """
+
+        self.model.train() # set model to training mode
+
         if self.args.dgm == 'feddg':
             data = []
             for images, labels in self.train_loader:
@@ -60,10 +63,7 @@ class Client:
 
                 data.append((images, labels, batch_ctrs, batch_ctrs_labels))
 
-            
-            self.model.train() # set model to training mode
             for images, labels, ctrs, ctrs_labels in data:
-
                 # meta-train
                 # compute the first part of the total lost and updated paramaters
 
@@ -102,12 +102,9 @@ class Client:
                 total_loss = loss_part1 + loss_part2
                 
                 total_loss.backward()
-                optimizer.step()
 
         elif self.args.dgm == 'fedsr':
-            self.model.train() # set model to training mode
             for cur_step, (images, labels) in enumerate(self.train_loader):
-
                 images = images.to('cuda')
                 labels = labels.to('cuda')
                 
@@ -134,10 +131,21 @@ class Client:
                 z_sigma_scaled = z_sigma * self.C
                 regCMI = torch.log(r_sigma) - torch.log(z_sigma_scaled) + (z_sigma_scaled**2+(z_mu_scaled-r_mu)**2)/(2*r_sigma**2) - 0.5
                 regCMI = regCMI.sum(1).mean()
-                loss = loss + self.args.cmi*regCMI
-                
+                loss = loss + self.args.cmi*regCMI          
                 loss.backward()
-                optimizer.step()
+
+        else:
+            for cur_step, (images, labels) in enumerate(self.train_loader):
+                images = images.to('cuda')
+                labels = labels.to('cuda')
+
+                optimizer.zero_grad()
+                outputs = self._get_outputs(images)
+                loss = self.criterion(outputs, labels)
+                loss = self.reduction(loss, labels)
+                loss.backward()
+
+        optimizer.step()
 
     def train(self, bank, train_client_names):
         """
@@ -158,22 +166,17 @@ class Client:
             momentum=self.args.m
         )
 
-        if self.args.dgm == 'feddg':
-            for epoch in range(self.args.num_epochs):
-                self.run_epoch(epoch, local_optimizer, bank, train_client_names)
-        elif self.args.dgm == 'fedsr':
-            for epoch in range(self.args.num_epochs):
-                self.run_epoch(epoch, local_optimizer, None, None)
+        for epoch in range(self.args.num_epochs):
+            self.run_epoch(epoch, local_optimizer, bank, train_client_names)
 
         return len(self.dataset), copy.deepcopy(self.model.state_dict())
     
-
     def test(self, metric):
         """
         This method tests the model on the local dataset of the client.
         :param metric: StreamMetric object
         """
-
+        
         samples = 0
         cumulative_loss = 0
         self.model.eval() # set model to evaluation mode
