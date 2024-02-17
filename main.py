@@ -23,7 +23,6 @@ from utils.stream_metrics import StreamSegMetrics, StreamClsMetrics
 from utils.bank import Bank
 
 from models.cnn import CNN
-# import wandb
 
 
 def set_seed(random_seed):
@@ -200,7 +199,6 @@ def gen_clients(args, train_datasets, test_datasets, model):
 
 
 def main():
-    # wandb.login()
     
     parser = get_parser()
     args = parser.parse_args()
@@ -220,10 +218,8 @@ def main():
     
     bank = Bank(train_clients)
 
-    server = Server(args, train_clients, test_clients, model, metrics, bank, wandb)
+    server = Server(args, train_clients, test_clients, model, metrics, bank)
     server.train()
-
-    # wandb.finish()
 
 
 if __name__ == '__main__':    

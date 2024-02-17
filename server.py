@@ -6,7 +6,7 @@ import numpy as np
 
 class Server:
 
-    def __init__(self, args, train_clients, test_clients, model, metrics, bank, wandb):
+    def __init__(self, args, train_clients, test_clients, model, metrics, bank):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
@@ -14,28 +14,10 @@ class Server:
         self.metrics = metrics
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         self.bank = bank
-        self.wandb = wandb
 
         self.mode = 'iid'
         if self.args.niid:
             self.mode = 'niid'
-
-        wandb.init(
-        project = 'narenji', 
-        name = f'2nd Phase -> NO. Candidates: {self.args.num_cand} - Epochs: {self.args.num_epochs} - NO. Clients: {self.args.clients_per_round} - Mode: {self.mode}',
-        config={
-            'epochs': self.args.num_epochs,
-            'number_of_clients': self.args.clients_per_round,
-            'batch_size': self.args.bs,
-            'learning_rate': self.args.lr,
-            'momentum': self.args.m,
-            'cnn_weight_decay': '1e-5',
-            'fc_weight_decay': '1e-3',
-            'mode': self.mode,
-            'probability': self.args.prob,
-            'percentage_of_clients': self.args.sel_per
-            }
-        )
 
     def select_clients(self):
 
@@ -135,12 +117,6 @@ class Server:
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
                 
-        self.wandb.log({
-            'Train Loss': loss,
-            'Train Overal Accuracy': overal_acc,
-            'Train Mean Accuracy': mean_acc,
-        })
-
     def test(self):
         """
             This method handles the test on the test clients
@@ -158,9 +134,3 @@ class Server:
         print('Total Accuracy: ', round(overal_acc, 2))
         print('Mean Accuracy: ', round(mean_acc, 2))
         print()
-        
-        self.wandb.log({
-            'Test Loss': loss,
-            'Test Overal Accuracy': overal_acc,
-            'Test Mean Accuracy': mean_acc,
-        })

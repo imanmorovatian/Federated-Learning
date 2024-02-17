@@ -6,7 +6,6 @@ from torch.utils.data import ConcatDataset, DataLoader
 from torchvision import datasets, transforms
 from utils.args import get_parser
 from main import set_seed, model_init, get_datasets, gen_clients
-# import wandb
 
 
 def train(data_loader, net, loss_function, optimizer, device):
@@ -68,8 +67,6 @@ def validation_or_test(data_loader, net, loss_function, device):
 
   return cumulative_loss / samples, cumulative_accuracy / samples * 100
 
-
-# wandb.login()
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 100
@@ -136,19 +133,6 @@ optimizer = optim.SGD(
     momentum=MOMENTUM
 )
 
-# wandb.init(
-#       project = 'narenji', 
-#       name = f'3th Phase: Centeralized Training Domain Test {args.dt}',
-#       config={
-#         'domain test': args.dt,
-#         'epochs': EPOCHS,
-#         'batch_size': BATCH_SIZE,
-#         'learning_rate': LEARNING_RATE,
-#         'momentum': MOMENTUM,
-#         'weight_decay_cnn': CNN_WEIGHT_DECAY,
-#         'weight_decay_fc': FC_WEIGHT_DECAY
-#       }
-# )
 
 train_losses = []
 train_accuracies = []
@@ -166,20 +150,9 @@ for epoch in range(EPOCHS):
   val_losses.append(val_loss)
   val_accuracies.append(val_accuracy)
 
-  # wandb.log({
-  #   'Train Loss': train_loss,
-  #   'Train Accuracy': train_accuracy,
-  #   'Validation Loss': val_loss,
-  #   'Validation Accuracy': val_accuracy
-  #   })
-  
+
   print(f'Epoch: {epoch+1}/{EPOCHS}')
   print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f} *** Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
 
 test_loss, test_accuracy = validation_or_test(test_loader, net, loss_function, DEVICE)
 print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
-
-# wandb.log({"Test Accuracy": test_accuracy, "Test Loss": test_loss})
-
-# wandb.finish()
-
