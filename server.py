@@ -2,18 +2,18 @@ import copy
 from collections import OrderedDict
 from utils.stream_metrics import StreamClsMetrics
 import numpy as np
-import torch
 
 
 class Server:
 
-    def __init__(self, args, train_clients, test_clients, model, metrics, wandb):
+    def __init__(self, args, train_clients, test_clients, model, metrics, bank, wandb):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
         self.model = model
         self.metrics = metrics
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
+        self.bank = bank
         self.wandb = wandb
 
         self.mode = 'iid'
@@ -75,10 +75,11 @@ class Server:
             :param clients: list of all the clients to train
             :return: model updates gathered from the clients, to be aggregated
         """
+        train_client_names = [client.name for client in clients]
         updates = []
         for i, c in enumerate(clients):
             # TODO: missing code here!
-            (len, parm) = c.train()
+            (len, parm) = c.train(self.bank, train_client_names)
             updates.append((len, parm))
         return updates
 

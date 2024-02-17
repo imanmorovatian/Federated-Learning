@@ -45,7 +45,6 @@ class CNN(nn.Module):
         
         return out
     
-
     def featurize(self, X, num_samples=1):
         temp = self.layer1(X)
         temp = self.layer2(temp)

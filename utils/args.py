@@ -26,4 +26,5 @@ def get_parser():
     parser.add_argument('--dt', type=int, choices=[0, 1, 2, 3, 4, 5], default=0, help='the domain will be used at the domain test') # added by ourselves
     parser.add_argument('--l2r', type=float, default=0.01, help='L2R coefficient') # added by ourselves
     parser.add_argument('--cmi', type=float, default=0.001, help='Conditional Mutual Information') # added by ourselves
+    parser.add_argument('--dgm', type=str, choices=['fedsr', 'feddg', 'none'], required=True, help='The used method to tackle domain generalization')
     return parser
