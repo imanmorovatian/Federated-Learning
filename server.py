@@ -29,7 +29,7 @@ class Server:
             for i, client in enumerate(self.train_clients):
                 probs[i] = len(client.test_loader) / all_data
 
-            candidates = np.random.choice(self.train_clients, self.args.num_cand, p=probs, replace=False)
+            candidates = np.random.choice(self.train_clients, self.args.num_candidates, p=probs, replace=False)
 
             temp = StreamClsMetrics(62, 'temp') # test function of the client class will be used. One argumetn
                                                 # of the function is StreamClsMetrics object, so one object of that

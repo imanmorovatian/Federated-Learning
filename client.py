@@ -120,7 +120,7 @@ class Client:
                 regCMI = torch.zeros_like(loss)
 
                 regL2R = z.norm(dim=1).mean()
-                loss = loss + self.args.l2r * regL2R
+                loss = loss + self.args.fedsr_l2r * regL2R
 
                 r_sigma_softplus = F.softplus(self.r_sigma)
                 r_mu = self.r_mu[labels.cpu()]
@@ -131,7 +131,7 @@ class Client:
                 z_sigma_scaled = z_sigma * self.C
                 regCMI = torch.log(r_sigma) - torch.log(z_sigma_scaled) + (z_sigma_scaled**2+(z_mu_scaled-r_mu)**2)/(2*r_sigma**2) - 0.5
                 regCMI = regCMI.sum(1).mean()
-                loss = loss + self.args.cmi*regCMI          
+                loss = loss + self.args.fedsr_cmi*regCMI          
                 loss.backward()
 
         else:
