@@ -167,7 +167,7 @@ class Client:
         )
 
         for epoch in range(self.args.num_epochs):
-            self.run_epoch(epoch, local_optimizer, bank, train_client_names)
+            self.run_epoch(local_optimizer, bank, train_client_names)
 
         return len(self.dataset), copy.deepcopy(self.model.state_dict())
     
