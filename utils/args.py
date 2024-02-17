@@ -19,7 +19,7 @@ def get_parser():
     parser.add_argument('--num_epochs', type=int, required=True, help='number of local epochs')
     parser.add_argument('--clients_per_round', type=int, required=True, help='number of clients trained per round')
 
-    parser.add_argument('client_selection_m', type=str, choices=['random', 'pwc'], required=True,
+    parser.add_argument('--client_selection_m', type=str, choices=['random', 'pwc'], required=True,
                         help='The method for client selection. It could be random or power of choice (pwc)')
     
     parser.add_argument('--num_candidates', type=int, default=10, help='number of candidates for power-of-choice strategy')
