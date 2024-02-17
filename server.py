@@ -15,42 +15,41 @@ class Server:
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
         self.bank = bank
 
-        self.mode = 'iid'
-        if self.args.niid:
-            self.mode = 'niid'
-
     def select_clients(self):
+        if self.args.client_selection_m == 'random':
+            num_clients = min(self.args.clients_per_round, len(self.train_clients))
+            selected_clients = np.random.choice(self.train_clients, num_clients, replace=False)
 
-        all_data = 0
-        for client in self.train_clients:
-            all_data += len(client.test_loader)
+        else:
+            all_data = 0
+            for client in self.train_clients:
+                all_data += len(client.test_loader)
 
-        probs = [0] * len(self.train_clients)
-        for i, client in enumerate(self.train_clients):
-            probs[i] = len(client.test_loader) / all_data
+            probs = [0] * len(self.train_clients)
+            for i, client in enumerate(self.train_clients):
+                probs[i] = len(client.test_loader) / all_data
 
-        candidates = np.random.choice(self.train_clients, self.args.num_cand, p=probs, replace=False)
+            candidates = np.random.choice(self.train_clients, self.args.num_cand, p=probs, replace=False)
 
-        temp = StreamClsMetrics(62, 'temp') # test function of the client class will be used. One argumetn
-                                            # of the function is StreamClsMetrics object, so one object of that
-                                            # type is passed. It is just for compatibility with the function prototype
-                                            # and this object is not used anywhere else
-        clients = []
-        for candidate in candidates:
-            loss = candidate.test(temp)
-            clients.append( (loss, candidate) )
+            temp = StreamClsMetrics(62, 'temp') # test function of the client class will be used. One argumetn
+                                                # of the function is StreamClsMetrics object, so one object of that
+                                                # type is passed. It is just for compatibility with the function prototype
+                                                # and this object is not used anywhere else
+            clients = []
+            for candidate in candidates:
+                loss = candidate.test(temp)
+                clients.append( (loss, candidate) )
 
-        sorted_clients = sorted(clients, key=lambda pair: pair[0], reverse=True)
-        
-        num_clients = min(self.args.clients_per_round, len(sorted_clients))
+            sorted_clients = sorted(clients, key=lambda pair: pair[0], reverse=True)
+            
+            num_clients = min(self.args.clients_per_round, len(sorted_clients))
 
-        top_clients = sorted_clients[:num_clients]
+            top_clients = sorted_clients[:num_clients]
 
-        selected_clients = [pair[1] for pair in top_clients]
+            selected_clients = [pair[1] for pair in top_clients]
 
         return selected_clients
         
-
     def train_round(self, clients):
         """
             This method trains the model with the dataset of the clients. It handles the training at single round level
